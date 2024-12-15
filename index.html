@@ -20,9 +20,8 @@
 
     .container {
       display: flex;
-      flex-wrap: wrap;
-      gap: 20px;
-      justify-content: center;
+      justify-content: space-between; /* Updated to make columns inline */
+      gap: 10px; /* কলামগুলির মধ্যে দূরত্ব কমানো হলো */
       width: 100%;
       max-width: 1200px;
       padding: 20px;
@@ -31,9 +30,8 @@
     }
 
     .column {
-      flex: 1 1 calc(25% - 20px);
-      max-width: calc(25% - 20px);
-      height: 200px;
+      width: 248px;
+      height: 271px;
       border: 2px solid #333;
       overflow: hidden;
       position: relative;
@@ -129,15 +127,15 @@
 
     @media (max-width: 768px) {
       .column {
-        flex: 1 1 calc(50% - 20px);
-        max-width: calc(50% - 20px);
+        width: 248px;
+        height: 271px;
       }
     }
 
     @media (max-width: 480px) {
       .column {
-        flex: 1 1 calc(100% - 20px);
-        max-width: calc(100% - 20px);
+        width: 248px;
+        height: 271px;
       }
 
       .controls {
@@ -281,7 +279,7 @@
       columnTitle.textContent = newName ? newName : `Column ${columnNumber}`;
     }
 
-    // Change Column Image
+    // Change Column Image and Name based on uploaded image
     function changeImage(columnNumber) {
       const fileInput = document.querySelector(`#col${columnNumber}-image`);
       const image = document.querySelector(`#col${columnNumber} img`);
@@ -290,6 +288,10 @@
         const reader = new FileReader();
         reader.onload = function (e) {
           image.src = e.target.result;
+
+          // Set the column name to the uploaded image's name
+          const columnTitle = document.querySelector(`#col${columnNumber} h3`);
+          columnTitle.textContent = file.name.split('.')[0]; // Remove the file extension
         };
         reader.readAsDataURL(file);
       }
