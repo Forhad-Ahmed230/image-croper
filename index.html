@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Responsive Sliding Columns with Screen Recording</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background-color: #f4f4f4;
+      font-family: Arial, sans-serif;
+      overflow: hidden;
+    }
+
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: center;
+      width: 100%;
+      max-width: 1200px;
+      padding: 20px;
+      box-sizing: border-box;
+      position: relative;
+    }
+
+    .column {
+      flex: 1 1 calc(25% - 20px);
+      max-width: calc(25% - 20px);
+      height: 200px;
+      border: 2px solid #333;
+      overflow: hidden;
+      position: relative;
+      opacity: 0;
+      transform: translateY(100%);
+      transition: transform 1s ease-in-out, opacity 1s ease-in-out;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .column:nth-child(1) { background-color: #ffe4e1; }
+    .column:nth-child(2) { background-color: #ffa500; }
+    .column:nth-child(3) { background-color: #90ee90; }
+    .column:nth-child(4) { background-color: #add8e6; }
+
+    .column.active {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .column h3 {
+      margin: 0;
+      padding: 5px;
+      text-align: center;
+      font-size: 16px;
+      color: white;
+      font-weight: bold;
+      background-color: rgba(0, 0, 0, 0.5);
+      width: 100%;
+    }
+
+    .images {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .images img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0;
+      transition: opacity 1s ease-in-out;
+    }
+
+    .images img.active {
+      opacity: 1;
+    }
+
+    .controls {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      z-index: 1000;
+      display: flex;
+      gap: 10px;
+    }
+
+    button, a {
+      padding: 10px 15px;
+      font-size: 14px;
+      cursor: pointer;
+      border: none;
+      border-radius: 5px;
+      background-color: #333;
+      color: white;
+      text-decoration: none;
+      text-align: center;
+    }
+
+    button:disabled {
+      background-color: #aaa;
+      cursor: not-allowed;
+    }
+
+    /* Footer style for buttons */
+    .footer-controls {
+      position: fixed;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 10px;
+    }
+
+    .footer-controls input[type="text"], .footer-controls input[type="file"] {
+      padding: 5px;
+      font-size: 14px;
+    }
+
+    @media (max-width: 768px) {
+      .column {
+        flex: 1 1 calc(50% - 20px);
+        max-width: calc(50% - 20px);
+      }
+    }
+
+    @media (max-width: 480px) {
+      .column {
+        flex: 1 1 calc(100% - 20px);
+        max-width: calc(100% - 20px);
+      }
+
+      .controls {
+        flex-direction: column;
+      }
+
+      button, a {
+        width: 100%;
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="controls">
+    <button id="startRecording">Start Recording</button>
+    <button id="stopRecording" disabled>Stop Recording</button>
+    <a id="downloadLink" style="display: none;" download="recording.webm">Download Recording</a>
+  </div>
+
+  <div class="container">
+    <div class="column" id="col1">
+      <h3>Column 1</h3>
+      <div class="images">
+        <img src="https://assets.goal.com/images/v3/blt2aaca933046f8b00/Cristiano%20Ronaldo%20Portugal%202024%20(4).jpg" alt="Image 1" class="active">
+      </div>
+    </div>
+    <div class="column" id="col2">
+      <h3>Column 2</h3>
+      <div class="images">
+        <img src="https://assets.goal.com/images/v3/blt3c036642b40322e0/e0f7a6471d35706c845b2bdc38908b92a3150a1b.jpg" alt="Image 2" class="active">
+      </div>
+    </div>
+    <div class="column" id="col3">
+      <h3>Column 3</h3>
+      <div class="images">
+        <img src="https://assets.goal.com/images/v3/blt06ae2d8595a25602/2061451672_2.jpg" alt="Image 3" class="active">
+      </div>
+    </div>
+    <div class="column" id="col4">
+      <h3>Column 4</h3>
+      <div class="images">
+        <img src="https://assets.goal.com/images/v3/bltf85963186ef9f54b/1683154727.jpg" alt="Image 4" class="active">
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer with the buttons for changing the column name and image -->
+  <div class="footer-controls">
+    <div>
+      <input type="text" id="col1-name" placeholder="Change Column 1 Name" onchange="updateColumn(1)">
+      <input type="file" id="col1-image" accept="image/*" onchange="changeImage(1)">
+    </div>
+    <div>
+      <input type="text" id="col2-name" placeholder="Change Column 2 Name" onchange="updateColumn(2)">
+      <input type="file" id="col2-image" accept="image/*" onchange="changeImage(2)">
+    </div>
+    <div>
+      <input type="text" id="col3-name" placeholder="Change Column 3 Name" onchange="updateColumn(3)">
+      <input type="file" id="col3-image" accept="image/*" onchange="changeImage(3)">
+    </div>
+    <div>
+      <input type="text" id="col4-name" placeholder="Change Column 4 Name" onchange="updateColumn(4)">
+      <input type="file" id="col4-image" accept="image/*" onchange="changeImage(4)">
+    </div>
+  </div>
+
+  <script>
+    const columns = document.querySelectorAll('.column');
+    let currentImageIndex = 0;
+
+    function showColumnsAndImages() {
+      columns.forEach((column, columnIndex) => {
+        setTimeout(() => {
+          column.classList.add('active');
+          const images = column.querySelectorAll('img');
+          images.forEach((img, imgIndex) => {
+            img.classList.remove('active');
+            if (imgIndex === currentImageIndex) {
+              img.classList.add('active');
+            }
+          });
+        }, columnIndex * 2000);
+      });
+
+      setTimeout(() => {
+        columns.forEach(column => column.classList.remove('active'));
+      }, 8000);
+
+      currentImageIndex = (currentImageIndex + 1) % 1;
+    }
+
+    setInterval(showColumnsAndImages, 10000);
+    showColumnsAndImages();
+
+    // Screen Recording
+    const startRecordingButton = document.getElementById('startRecording');
+    const stopRecordingButton = document.getElementById('stopRecording');
+    const downloadLink = document.getElementById('downloadLink');
+
+    let mediaRecorder;
+    let recordedChunks = [];
+
+    startRecordingButton.addEventListener('click', async () => {
+      try {
+        const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+        mediaRecorder = new MediaRecorder(stream);
+
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            recordedChunks.push(event.data);
+          }
+        };
+
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(recordedChunks, { type: 'video/webm' });
+          const url = URL.createObjectURL(blob);
+          downloadLink.href = url;
+          downloadLink.style.display = 'inline-block';
+        };
+
+        mediaRecorder.start();
+        startRecordingButton.disabled = true;
+        stopRecordingButton.disabled = false;
+      } catch (error) {
+        alert("Error: Screen recording not supported or permission denied.");
+        console.error(error);
+      }
+    });
+
+    stopRecordingButton.addEventListener('click', () => {
+      mediaRecorder.stop();
+      startRecordingButton.disabled = false;
+      stopRecordingButton.disabled = true;
+    });
+
+    // Update Column Name
+    function updateColumn(columnNumber) {
+      const newName = document.querySelector(`#col${columnNumber}-name`).value;
+      const columnTitle = document.querySelector(`#col${columnNumber} h3`);
+      columnTitle.textContent = newName ? newName : `Column ${columnNumber}`;
+    }
+
+    // Change Column Image
+    function changeImage(columnNumber) {
+      const fileInput = document.querySelector(`#col${columnNumber}-image`);
+      const image = document.querySelector(`#col${columnNumber} img`);
+      const file = fileInput.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          image.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+  </script>
+</body>
+</html>
