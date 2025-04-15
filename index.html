@@ -1,822 +1,836 @@
-<!DOCTYPE html>  
-<html lang="bn">  
-<head>  
-  <meta charset="UTF-8">  
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">  
-  <title>ইমেজ ক্রপার</title>  
-  <style>  
-    :root {  
-      --primary-color: #4a6bff;  
-      --secondary-color: #ff6b6b;  
-      --background-color: #f8f9fa;  
-      --text-color: #333;  
-      --border-color: #ddd;  
-      --shadow-color: rgba(0, 0, 0, 0.1);  
-    }  
-    * {  
-      margin: 0;  
-      padding: 0;  
-      box-sizing: border-box;  
-      font-family: 'Bangla', Arial, sans-serif;  
-    }  
-    body {  
-      background-color: var(--background-color);  
-      color: var(--text-color);  
-      min-height: 100vh;  
-      display: flex;  
-      flex-direction: column;  
-      align-items: center;  
-    }  
-    header {  
-      width: 100%;  
-      background: linear-gradient(135deg, var(--primary-color), #7a4bff);  
-      color: white;  
-      text-align: center;  
-      padding: 20px 0;  
-      margin-bottom: 30px;  
-      box-shadow: 0 4px 6px var(--shadow-color);  
-    }  
-    h1 {  
-      font-size: 2.2rem;  
-      margin-bottom: 10px;  
-    }  
-    p {  
-      font-size: 1rem;  
-      margin-bottom: 5px;  
-    }  
-    .container {  
-      width: 90%;  
-      max-width: 1000px;  
-      background: white;  
-      border-radius: 10px;  
-      padding: 20px;  
-      box-shadow: 0 8px 16px var(--shadow-color);  
-      margin-bottom: 30px;  
-    }  
-    .upload-section {  
-      border: 2px dashed var(--border-color);  
-      padding: 40px;  
-      text-align: center;  
-      margin-bottom: 20px;  
-      border-radius: 8px;  
-      background-color: #f9f9f9;  
-      transition: all 0.3s ease;  
-    }  
-    .upload-section:hover {  
-      border-color: var(--primary-color);  
-      background-color: #f0f4ff;  
-    }  
-    .upload-section h3 {  
-      margin-bottom: 15px;  
-      color: var(--primary-color);  
-    }  
-    .file-input { display: none; }  
-    .upload-btn {  
-      background-color: var(--primary-color);  
-      color: white;  
-      border: none;  
-      padding: 12px 25px;  
-      font-size: 16px;  
-      border-radius: 5px;  
-      cursor: pointer;  
-      transition: all 0.3s ease;  
-    }  
-    .upload-btn:hover {  
-      background-color: #3a5bef;  
-      transform: translateY(-2px);  
-    }  
-    .crop-container {  
-      display: none;  
-      flex-direction: column;  
-      align-items: center;  
-      margin-top: 20px;  
-    }  
-    .image-container {  
-      position: relative;  
-      max-width: 100%;  
-      margin-bottom: 20px;  
-      border: 1px solid var(--border-color);  
-      overflow: hidden;  
-    }  
-    #image-preview {  
-      display: block;  
-      max-width: 100%;  
-    }  
-    .crop-box {  
-      position: absolute;  
-      border: 2px dashed var(--secondary-color);  
-      background-color: rgba(255, 255, 255, 0.3);  
-      cursor: move;  
-      transition: all 0.1s ease;  
-    }  
-    /* রাউন্ড (ওভাল) শেপের জন্য ক্লিপ-পাথ প্রয়োগ */  
-    .crop-box.oval {  
-      border-radius: 50%;  
-      clip-path: ellipse(50% 50% at 50% 50%);  
-    }  
-    .resize-handle {  
-      position: absolute;  
-      width: 10px;  
-      height: 10px;  
-      background-color: var(--secondary-color);  
-      border-radius: 50%;  
-    }  
-    .handle-nw { top: -5px; left: -5px; cursor: nw-resize; }  
-    .handle-ne { top: -5px; right: -5px; cursor: ne-resize; }  
-    .handle-sw { bottom: -5px; left: -5px; cursor: sw-resize; }  
-    .handle-se { bottom: -5px; right: -5px; cursor: se-resize; }  
-    .controls {  
-      margin-top: 20px;  
-      display: flex;  
-      flex-wrap: wrap;  
-      gap: 15px;  
-      justify-content: center;  
-    }  
-    .control-group {  
-      background-color: #f5f5f5;  
-      padding: 15px;  
-      border-radius: 8px;  
-      width: 100%;  
-      max-width: 400px;  
-    }  
-    .control-group h3 {  
-      margin-bottom: 15px;  
-      color: var(--primary-color);  
-      border-bottom: 1px solid var(--border-color);  
-      padding-bottom: 8px;  
-    }  
-    .form-group { margin-bottom: 15px; }  
-    label {  
-      display: block;  
-      margin-bottom: 8px;  
-      font-weight: bold;  
-    }  
-    input[type="number"],  
-    input[type="text"],  
-    select {  
-      width: 100%;  
-      padding: 10px;  
-      border: 1px solid var(--border-color);  
-      border-radius: 5px;  
-      font-size: 14px;  
-    }  
-    .btn {  
-      padding: 12px 25px;  
-      border: none;  
-      border-radius: 5px;  
-      font-size: 16px;  
-      cursor: pointer;  
-      transition: all 0.3s ease;  
-    }  
-    .btn-primary {  
-      background-color: var(--primary-color);  
-      color: white;  
-    }  
-    .btn-secondary {  
-      background-color: var(--secondary-color);  
-      color: white;  
-    }  
-    .btn:hover {  
-      transform: translateY(-2px);  
-      box-shadow: 0 5px 10px var(--shadow-color);  
-    }  
-    .btn-primary:hover {  
-      background-color: #3a5bef;  
-    }  
-    .btn-secondary:hover {  
-      background-color: #ff5252;  
-    }  
-    .result-container {  
-      display: none;  
-      margin-top: 30px;  
-      text-align: center;  
-    }  
-    #result-image {  
-      max-width: 100%;  
-      border: 1px solid var(--border-color);  
-      margin-bottom: 20px;  
-    }  
-    #live-preview-canvas {  
-      border: 1px solid var(--border-color);  
-      margin-top: 10px;  
-      max-width: 100%;  
-    }  
-    .alert {  
-      padding: 15px;  
-      margin-bottom: 20px;  
-      border-radius: 5px;  
-      color: white;  
-      display: none;  
-    }  
-    .alert-success { background-color: #4caf50; }  
-    .alert-error { background-color: #f44336; }  
-    footer {  
-      margin-top: auto;  
-      width: 100%;  
-      background-color: #333;  
-      color: white;  
-      text-align: center;  
-      padding: 15px 0;  
-      font-size: 0.9rem;  
-    }  
-    @media (max-width: 768px) {  
-      .container { width: 95%; padding: 15px; }  
-      .upload-section { padding: 20px; }  
-      h1 { font-size: 1.8rem; }  
-    }  
-  </style>  
-</head>  
-<body>  
-  <header>  
-    <h1>ইমেজ ক্রপার অ্যাপ্লিকেশন</h1>  
-    <p>ইমেজ আপলোড করুন, নির্দিষ্ট সাইজে ক্রপ করুন এবং সেভ করুন।</p>  
-  </header>  
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ইমেজ ক্রপার</title>
+  <style>
+    :root {
+      --primary-color: #4a6bff;
+      --secondary-color: #ff6b6b;
+      --background-color: #f8f9fa;
+      --text-color: #333;
+      --border-color: #ddd;
+      --shadow-color: rgba(0, 0, 0, 0.1);
+    }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Bangla', Arial, sans-serif;
+    }
+    body {
+      background-color: var(--background-color);
+      color: var(--text-color);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    header {
+      width: 100%;
+      background: linear-gradient(135deg, var(--primary-color), #7a4bff);
+      color: white;
+      text-align: center;
+      padding: 20px 0;
+      margin-bottom: 30px;
+      box-shadow: 0 4px 6px var(--shadow-color);
+    }
+    h1 {
+      font-size: 2.2rem;
+      margin-bottom: 10px;
+    }
+    p {
+      font-size: 1rem;
+      margin-bottom: 5px;
+    }
+    .container {
+      width: 90%;
+      max-width: 1000px;
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 8px 16px var(--shadow-color);
+      margin-bottom: 30px;
+    }
+    .upload-section {
+      border: 2px dashed var(--border-color);
+      padding: 40px;
+      text-align: center;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      background-color: #f9f9f9;
+      transition: all 0.3s ease;
+    }
+    .upload-section:hover {
+      border-color: var(--primary-color);
+      background-color: #f0f4ff;
+    }
+    .upload-section h3 {
+      margin-bottom: 15px;
+      color: var(--primary-color);
+    }
+    .file-input { display: none; }
+    .upload-btn {
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      font-size: 16px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .upload-btn:hover {
+      background-color: #3a5bef;
+      transform: translateY(-2px);
+    }
+    .crop-container {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 20px;
+    }
+    .image-container {
+      position: relative;
+      max-width: 100%;
+      margin-bottom: 20px;
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+    }
+    #image-preview {
+      display: block;
+      max-width: 100%;
+    }
+    .crop-box {
+      position: absolute;
+      border: 2px dashed var(--secondary-color);
+      background-color: rgba(255, 255, 255, 0.3);
+      cursor: move;
+      transition: all 0.1s ease;
+    }
+    /* রাউন্ড (ওভাল) শেপের জন্য ক্লিপ-পাথ প্রয়োগ */
+    .crop-box.oval {
+      border-radius: 50%;
+      clip-path: ellipse(50% 50% at 50% 50%);
+    }
+    .resize-handle {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background-color: var(--secondary-color);
+      border-radius: 50%;
+    }
+    .handle-nw { top: -5px; left: -5px; cursor: nw-resize; }
+    .handle-ne { top: -5px; right: -5px; cursor: ne-resize; }
+    .handle-sw { bottom: -5px; left: -5px; cursor: sw-resize; }
+    .handle-se { bottom: -5px; right: -5px; cursor: se-resize; }
+    .controls {
+      margin-top: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      justify-content: center;
+    }
+    .control-group {
+      background-color: #f5f5f5;
+      padding: 15px;
+      border-radius: 8px;
+      width: 100%;
+      max-width: 400px;
+    }
+    .control-group h3 {
+      margin-bottom: 15px;
+      color: var(--primary-color);
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 8px;
+    }
+    .form-group { margin-bottom: 15px; }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;
+    }
+    input[type="number"],
+    input[type="text"],
+    select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid var(--border-color);
+      border-radius: 5px;
+      font-size: 14px;
+    }
+    .btn {
+      padding: 12px 25px;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .btn-primary {
+      background-color: var(--primary-color);
+      color: white;
+    }
+    .btn-secondary {
+      background-color: var(--secondary-color);
+      color: white;
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 10px var(--shadow-color);
+    }
+    .btn-primary:hover {
+      background-color: #3a5bef;
+    }
+    .btn-secondary:hover {
+      background-color: #ff5252;
+    }
+    .result-container {
+      display: none;
+      margin-top: 30px;
+      text-align: center;
+    }
+    #result-image {
+      max-width: 100%;
+      border: 1px solid var(--border-color);
+      margin-bottom: 20px;
+    }
+    #live-preview-canvas {
+      border: 1px solid var(--border-color);
+      margin-top: 10px;
+      max-width: 100%;
+    }
+    .alert {
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 5px;
+      color: white;
+      display: none;
+    }
+    .alert-success { background-color: #4caf50; }
+    .alert-error { background-color: #f44336; }
+    footer {
+      margin-top: auto;
+      width: 100%;
+      background-color: #333;
+      color: white;
+      text-align: center;
+      padding: 15px 0;
+      font-size: 0.9rem;
+    }
+    @media (max-width: 768px) {
+      .container { width: 95%; padding: 15px; }
+      .upload-section { padding: 20px; }
+      h1 { font-size: 1.8rem; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>ইমেজ ক্রপার অ্যাপ্লিকেশন</h1>
+    <p>ইমেজ আপলোড করুন, নির্দিষ্ট সাইজে ক্রপ করুন এবং সেভ করুন।</p>
+  </header>
     
-  <div class="container">  
-    <div class="upload-section" id="upload-section">  
-      <h3>ইমেজ আপলোড করুন</h3>  
-      <p>JPG, PNG, বা GIF ফরম্যাটের ইমেজ সমর্থিত</p>  
-      <input type="file" accept="image/*" id="file-input" class="file-input">  
-      <button class="upload-btn" id="upload-btn">ইমেজ নির্বাচন করুন</button>  
-    </div>  
+  <div class="container">
+    <div class="upload-section" id="upload-section">
+      <h3>ইমেজ আপলোড করুন</h3>
+      <p>JPG, PNG, বা GIF ফরম্যাটের ইমেজ সমর্থিত</p>
+      <input type="file" accept="image/*" id="file-input" class="file-input">
+      <button class="upload-btn" id="upload-btn">ইমেজ নির্বাচন করুন</button>
+    </div>
     
-    <div id="alert" class="alert"></div>  
+    <div id="alert" class="alert"></div>
     
-    <div class="crop-container" id="crop-container">  
-      <h2>ইমেজ ক্রপ করুন</h2>  
-      <p>ক্রপ বক্সের আকার ও অবস্থান পরিবর্তন করুন</p>  
+    <div class="crop-container" id="crop-container">
+      <h2>ইমেজ ক্রপ করুন</h2>
+      <p>ক্রপ বক্সের আকার ও অবস্থান পরিবর্তন করুন</p>
           
-      <div class="image-container" id="image-container">  
-        <img id="image-preview" src="" alt="প্রিভিউ">  
-        <div class="crop-box" id="crop-box">  
-          <div class="resize-handle handle-nw"></div>  
-          <div class="resize-handle handle-ne"></div>  
-          <div class="resize-handle handle-sw"></div>  
-          <div class="resize-handle handle-se"></div>  
-        </div>  
-      </div>  
+      <div class="image-container" id="image-container">
+        <img id="image-preview" src="" alt="প্রিভিউ">
+        <div class="crop-box" id="crop-box">
+          <div class="resize-handle handle-nw"></div>
+          <div class="resize-handle handle-ne"></div>
+          <div class="resize-handle handle-sw"></div>
+          <div class="resize-handle handle-se"></div>
+        </div>
+      </div>
     
-      <!-- লাইভ প্রিভিউ - ক্রপ বক্স অনুযায়ী আপডেট হবে -->  
-      <div class="control-group">  
-        <h3>লাইভ প্রিভিউ</h3>  
-        <canvas id="live-preview-canvas" width="200" height="200"></canvas>  
-      </div>  
+      <!-- লাইভ প্রিভিউ - ক্রপ বক্স অনুযায়ী আপডেট হবে -->
+      <div class="control-group">
+        <h3>লাইভ প্রিভিউ</h3>
+        <canvas id="live-preview-canvas" width="200" height="200"></canvas>
+      </div>
     
-      <div class="controls">  
-        <!-- প্রিসেট অ্যাসপেক্ট রেশিও -->  
-        <div class="control-group">  
-          <h3>প্রিসেট অ্যাসপেক্ট রেশিও</h3>  
-          <div class="form-group">  
-            <label for="aspect-ratio-select">রেশিও নির্বাচন করুন</label>  
-            <select id="aspect-ratio-select">  
-              <option value="free">ফ্রি</option>  
-              <option value="1">1:1</option>  
-              <option value="1.7778">16:9</option>  
-              <option value="1.3333">4:3</option>  
-            </select>  
-          </div>  
-        </div>  
+      <div class="controls">
+        <!-- প্রিসেট অ্যাসপেক্ট রেশিও -->
+        <div class="control-group">
+          <h3>প্রিসেট অ্যাসপেক্ট রেশিও</h3>
+          <div class="form-group">
+            <label for="aspect-ratio-select">রেশিও নির্বাচন করুন</label>
+            <select id="aspect-ratio-select">
+              <option value="free">ফ্রি</option>
+              <option value="1">1:1</option>
+              <option value="1.7778">16:9</option>
+              <option value="1.3333">4:3</option>
+            </select>
+          </div>
+        </div>
     
-        <!-- ইউনডু/রিডু -->  
-        <div class="control-group">  
-          <h3>ইউনডু / রিডু</h3>  
-          <div class="form-group">  
-            <button class="btn btn-secondary" id="undo-btn">ইউনডু</button>  
-            <button class="btn btn-secondary" id="redo-btn">রিডু</button>  
-          </div>  
-        </div>  
+        <!-- ইউনডু/রিডু -->
+        <div class="control-group">
+          <h3>ইউনডু / রিডু</h3>
+          <div class="form-group">
+            <button class="btn btn-secondary" id="undo-btn">ইউনডু</button>
+            <button class="btn btn-secondary" id="redo-btn">রিডু</button>
+          </div>
+        </div>
     
-        <!-- ক্রপ সেটিংস -->  
-        <div class="control-group">  
-          <h3>ক্রপ সেটিংস</h3>  
-          <div class="form-group">  
-            <label for="crop-width">প্রস্থ (পিক্সেল)</label>  
-            <input type="number" id="crop-width" min="10" value="200">  
-          </div>  
-          <div class="form-group">  
-            <label for="crop-height">উচ্চতা (পিক্সেল)</label>  
-            <input type="number" id="crop-height" min="10" value="200">  
-          </div>  
-          <button class="btn btn-primary" id="apply-dimensions-btn">আকার প্রয়োগ করুন</button>  
-        </div>  
+        <!-- ক্রপ সেটিংস -->
+        <div class="control-group">
+          <h3>ক্রপ সেটিংস</h3>
+          <div class="form-group">
+            <label for="crop-width">প্রস্থ (পিক্সেল)</label>
+            <input type="number" id="crop-width" min="10" value="200">
+          </div>
+          <div class="form-group">
+            <label for="crop-height">উচ্চতা (পিক্সেল)</label>
+            <input type="number" id="crop-height" min="10" value="200">
+          </div>
+          <button class="btn btn-primary" id="apply-dimensions-btn">আকার প্রয়োগ করুন</button>
+        </div>
     
-        <!-- ক্রপ বক্স শেপ নির্বাচন -->  
-        <div class="control-group">  
-          <h3>ক্রপ বক্স শেপ</h3>  
-          <div class="form-group">  
-            <label>  
-              <input type="radio" name="crop-shape" value="rectangle" checked> রেক্ট্যাঙ্গেল  
-            </label>  
-            <label>  
-              <input type="radio" name="crop-shape" value="oval"> রাউন্ড (ওভাল)  
-            </label>  
-          </div>  
-        </div>  
+        <!-- ক্রপ বক্স শেপ নির্বাচন -->
+        <div class="control-group">
+          <h3>ক্রপ বক্স শেপ</h3>
+          <div class="form-group">
+            <label>
+              <input type="radio" name="crop-shape" value="rectangle" checked> রেক্ট্যাঙ্গেল
+            </label>
+            <label>
+              <input type="radio" name="crop-shape" value="oval"> রাউন্ড (ওভাল)
+            </label>
+          </div>
+        </div>
     
-        <!-- সেভ সেটিংস: ফরম্যাট ও কোয়ালিটি -->  
-        <div class="control-group">  
-          <h3>সেভ সেটিংস</h3>  
-          <div class="form-group">  
-            <label for="filename">ফাইল নাম</label>  
-            <input type="text" id="filename" placeholder="cropped_image">  
-          </div>  
-          <div class="form-group">  
-            <label for="format-select">ফরম্যাট নির্বাচন করুন</label>  
-            <select id="format-select">  
-              <option value="png">PNG</option>  
-              <option value="jpeg">JPG</option>  
-            </select>  
-          </div>  
-          <div class="form-group" id="quality-group" style="display:none;">  
-            <label for="quality-input">কোয়ালিটি (0.1 - 1.0)</label>  
-            <input type="number" step="0.1" min="0.1" max="1" id="quality-input" value="0.92">  
-          </div>  
-          <button class="btn btn-secondary" id="crop-btn">ক্রপ এবং সেভ করুন</button>  
-        </div>  
-      </div>  
+        <!-- সেভ সেটিংস: ফরম্যাট ও কোয়ালিটি -->
+        <div class="control-group">
+          <h3>সেভ সেটিংস</h3>
+          <div class="form-group">
+            <label for="filename">ফাইল নাম</label>
+            <input type="text" id="filename" placeholder="cropped_image">
+          </div>
+          <div class="form-group">
+            <label for="format-select">ফরম্যাট নির্বাচন করুন</label>
+            <!-- ডিফল্টভাবে JPG (jpeg) সিলেক্ট করা -->
+            <select id="format-select">
+              <option value="jpeg" selected>JPG</option>
+              <option value="png">PNG</option>
+            </select>
+          </div>
+          <div class="form-group" id="quality-group" style="display:none;">
+            <label for="quality-input">কোয়ালিটি (0.1 - 1.0)</label>
+            <input type="number" step="0.1" min="0.1" max="1" id="quality-input" value="0.92">
+          </div>
+          <button class="btn btn-secondary" id="crop-btn">ক্রপ এবং সেভ করুন</button>
+        </div>
+      </div>
     
-      <button class="btn btn-secondary" id="reset-btn" style="margin-top:15px;">নতুন ইমেজ ক্রপ করুন</button>  
-    </div>  
+      <button class="btn btn-secondary" id="reset-btn" style="margin-top:15px;">নতুন ইমেজ ক্রপ করুন</button>
+    </div>
     
-    <div class="result-container" id="result-container">  
-      <h2>ক্রপ করা ইমেজ</h2>  
-      <img id="result-image" src="" alt="ক্রপ করা ইমেজ">  
-      <p>ক্রপ করা ইমেজটি সফলভাবে তৈরি করা হয়েছে।</p>  
-      <!-- শুধুমাত্র "নির্দিষ্ট পাথে সেভ করুন" বাটন রাখা হয়েছে -->  
-      <button class="btn btn-primary" id="save-path-btn">নির্দিষ্ট পাথে সেভ করুন</button>  
-      <button class="btn btn-secondary" id="back-btn" style="margin-top:15px;">ফিরে যান</button>  
-    </div>  
-  </div>  
+    <div class="result-container" id="result-container">
+      <h2>ক্রপ করা ইমেজ</h2>
+      <img id="result-image" src="" alt="ক্রপ করা ইমেজ">
+      <p>ক্রপ করা ইমেজটি সফলভাবে তৈরি করা হয়েছে।</p>
+      <!-- শুধুমাত্র "নির্দিষ্ট পাথে সেভ করুন" বাটন রাখা হয়েছে -->
+      <button class="btn btn-primary" id="save-path-btn">নির্দিষ্ট পাথে সেভ করুন</button>
+      <button class="btn btn-secondary" id="back-btn" style="margin-top:15px;">ফিরে যান</button>
+    </div>
+  </div>
     
-  <footer>  
-    <p>&copy; ২০২৫ ইমেজ ক্রপার অ্যাপ্লিকেশন</p>  
-  </footer>  
+  <footer>
+    <p>&copy; ২০২৫ ইমেজ ক্রপার অ্যাপ্লিকেশন</p>
+  </footer>
     
-  <script>  
-    document.addEventListener('DOMContentLoaded', function() {  
-      // এলিমেন্ট নির্বাচন  
-      const uploadSection = document.getElementById('upload-section');  
-      const fileInput = document.getElementById('file-input');  
-      const uploadBtn = document.getElementById('upload-btn');  
-      const cropContainer = document.getElementById('crop-container');  
-      const imagePreview = document.getElementById('image-preview');  
-      const cropBox = document.getElementById('crop-box');  
-      const cropWidthInput = document.getElementById('crop-width');  
-      const cropHeightInput = document.getElementById('crop-height');  
-      const applyDimensionsBtn = document.getElementById('apply-dimensions-btn');  
-      const cropBtn = document.getElementById('crop-btn');  
-      const resultContainer = document.getElementById('result-container');  
-      const resultImage = document.getElementById('result-image');  
-      const resetBtn = document.getElementById('reset-btn');  
-      const filenameInput = document.getElementById('filename');  
-      const alertBox = document.getElementById('alert');  
-      const aspectRatioSelect = document.getElementById('aspect-ratio-select');  
-      const qualityGroup = document.getElementById('quality-group');  
-      const qualityInput = document.getElementById('quality-input');  
-      const formatSelect = document.getElementById('format-select');  
-      const livePreviewCanvas = document.getElementById('live-preview-canvas');  
-      const liveCtx = livePreviewCanvas.getContext('2d');  
-      const backBtn = document.getElementById('back-btn');  
-      const savePathBtn = document.getElementById('save-path-btn');  
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // এলিমেন্ট নির্বাচন
+      const uploadSection = document.getElementById('upload-section');
+      const fileInput = document.getElementById('file-input');
+      const uploadBtn = document.getElementById('upload-btn');
+      const cropContainer = document.getElementById('crop-container');
+      const imagePreview = document.getElementById('image-preview');
+      const cropBox = document.getElementById('crop-box');
+      const cropWidthInput = document.getElementById('crop-width');
+      const cropHeightInput = document.getElementById('crop-height');
+      const applyDimensionsBtn = document.getElementById('apply-dimensions-btn');
+      const cropBtn = document.getElementById('crop-btn');
+      const resultContainer = document.getElementById('result-container');
+      const resultImage = document.getElementById('result-image');
+      const resetBtn = document.getElementById('reset-btn');
+      const filenameInput = document.getElementById('filename');
+      const alertBox = document.getElementById('alert');
+      const aspectRatioSelect = document.getElementById('aspect-ratio-select');
+      const qualityGroup = document.getElementById('quality-group');
+      const qualityInput = document.getElementById('quality-input');
+      const formatSelect = document.getElementById('format-select');
+      const livePreviewCanvas = document.getElementById('live-preview-canvas');
+      const liveCtx = livePreviewCanvas.getContext('2d');
+      const backBtn = document.getElementById('back-btn');
+      const savePathBtn = document.getElementById('save-path-btn');
       
-      // Undo/Redo history  
-      let historyStack = [];  
-      let redoStack = [];  
-      let lastDataUrl = '';  // সর্বশেষ ক্রপ করা ইমেজের Data URL সংরক্ষণ  
+      // Undo/Redo history
+      let historyStack = [];
+      let redoStack = [];
+      let lastDataUrl = '';  // সর্বশেষ ক্রপ করা ইমেজের Data URL সংরক্ষণ
       
-      let originalImage = null;  
-      let isDragging = false;  
-      let isResizing = false;  
-      let currentResizeHandle = null;  
-      let startX, startY, startWidth, startHeight, startLeft, startTop;  
-    
-      // ইভেন্ট লিসেনার  
-      uploadBtn.addEventListener('click', () => fileInput.click());  
-      fileInput.addEventListener('change', handleFileSelect);  
-      applyDimensionsBtn.addEventListener('click', applyDimensions);  
-      cropBtn.addEventListener('click', cropAndSave);  
-      resetBtn.addEventListener('click', resetApp);  
-      aspectRatioSelect.addEventListener('change', applyAspectRatio);  
-      formatSelect.addEventListener('change', function() {  
-        qualityGroup.style.display = (this.value === 'jpeg') ? 'block' : 'none';  
-      });  
-      savePathBtn.addEventListener('click', () => {  
-        if(!lastDataUrl) {  
-          showAlert('ক্রপ করা ইমেজ পাওয়া যায়নি!', 'error');  
-          return;  
-        }  
-        let filename = filenameInput.value.trim() || 'cropped_image';  
-        filename = filename.replace(/\.(jpeg|jpg|png)$/i, '');  
-        saveFileToPath(lastDataUrl, filename, formatSelect.value);  
-      });  
-    
-      // Undo/Redo buttons  
-      document.getElementById('undo-btn').addEventListener('click', undo);  
-      document.getElementById('redo-btn').addEventListener('click', redo);  
-    
-      // 'ফিরে যান' বাটনের ইভেন্ট লিসেনার  
-      backBtn.addEventListener('click', function() {  
-        resultContainer.style.display = 'none';  
-        cropContainer.style.display = 'flex';  
-      });  
-    
-      // ক্রপ বক্স শেপ সিলেকশন  
-      document.querySelectorAll('input[name="crop-shape"]').forEach(radio => {  
-        radio.addEventListener('change', function() {  
-          if (this.value === 'oval') {  
-            cropBox.classList.add('oval');  
-          } else {  
-            cropBox.classList.remove('oval');  
-          }  
-        });  
-      });  
-    
-      // ড্র্যাগ ও রিসাইজ ইভেন্ট  
-      cropBox.addEventListener('mousedown', startDrag);  
-      document.querySelectorAll('.resize-handle').forEach(handle => {  
-        handle.addEventListener('mousedown', startResize);  
-      });  
-      document.addEventListener('mousemove', handleMouseMove);  
-      document.addEventListener('mouseup', stopDragAndResize);  
-    
-      // টাচ ইভেন্ট  
-      cropBox.addEventListener('touchstart', handleTouchStart);  
-      document.querySelectorAll('.resize-handle').forEach(handle => {  
-        handle.addEventListener('touchstart', handleTouchStartResize);  
-      });  
-      document.addEventListener('touchmove', handleTouchMove);  
-      document.addEventListener('touchend', stopDragAndResize);  
-    
-      // বর্তমান স্টেট সংরক্ষণ  
-      function saveState() {  
-        historyStack.push({  
-          left: cropBox.style.left,  
-          top: cropBox.style.top,  
-          width: cropBox.style.width,  
-          height: cropBox.style.height,  
-          shape: cropBox.classList.contains('oval') ? 'oval' : 'rectangle'  
-        });  
-        redoStack = [];  
-      }  
-    
-      function undo() {  
-        if(historyStack.length > 1) {  
-          redoStack.push(historyStack.pop());  
-          let state = historyStack[historyStack.length - 1];  
-          applyState(state);  
-        } else {  
-          showAlert('আর কোন পরিবর্তন পাওয়া যায়নি!', 'error');  
-        }  
-      }  
-    
-      function redo() {  
-        if(redoStack.length) {  
-          let state = redoStack.pop();  
-          historyStack.push(state);  
-          applyState(state);  
-        } else {  
-          showAlert('আর কোন পরিবর্তন পুনরায় করা যায়নি!', 'error');  
-        }  
-      }  
-    
-      function applyState(state) {  
-        cropBox.style.left = state.left;  
-        cropBox.style.top = state.top;  
-        cropBox.style.width = state.width;  
-        cropBox.style.height = state.height;  
-        if(state.shape === 'oval') {  
-          cropBox.classList.add('oval');  
-          document.querySelector('input[name="crop-shape"][value="oval"]').checked = true;  
-        } else {  
-          cropBox.classList.remove('oval');  
-          document.querySelector('input[name="crop-shape"][value="rectangle"]').checked = true;  
-        }  
-        updateDimensionInputs();  
-        updateLivePreview();  
-      }  
-    
-      function handleFileSelect(e) {  
-        const file = e.target.files[0];  
-        if (!file) return;  
-        const validTypes = ['image/jpeg', 'image/png', 'image/gif'];  
-        if (!validTypes.includes(file.type)) {  
-          showAlert('দুঃখিত, শুধুমাত্র JPG, PNG, এবং GIF ফরম্যাট সমর্থিত।', 'error');  
-          return;  
-        }  
-        const reader = new FileReader();  
-        reader.onload = function(event) {  
-          const img = new Image();  
-          img.onload = function() {  
-            originalImage = img;  
-            imagePreview.src = event.target.result;  
-            const defaultName = file.name.split('.')[0] + '_cropped';  
-            filenameInput.value = defaultName;  
-            initCropBox();  
-            uploadSection.style.display = 'none';  
-            cropContainer.style.display = 'flex';  
-          };  
-          img.src = event.target.result;  
-        };  
-        reader.readAsDataURL(file);  
-      }  
-    
-      function initCropBox() {  
-        const width = Math.min(200, imagePreview.width);  
-        const height = Math.min(200, imagePreview.height);  
-        cropWidthInput.value = width;  
-        cropHeightInput.value = height;  
-        const left = (imagePreview.width / 2) - (width / 2);  
-        const top = (imagePreview.height / 2) - (height / 2);  
-        cropBox.style.width = width + 'px';  
-        cropBox.style.height = height + 'px';  
-        cropBox.style.left = left + 'px';  
-        cropBox.style.top = top + 'px';  
-        saveState();  
-        updateLivePreview();  
-      }  
-    
-      function applyDimensions() {  
-        const width = parseInt(cropWidthInput.value);  
-        const height = parseInt(cropHeightInput.value);  
-        if(isNaN(width) || isNaN(height) || width <= 0 || height <= 0) {  
-          showAlert('দয়া করে বৈধ আকার প্রবেশ করান।', 'error');  
-          return;  
-        }  
-        cropBox.style.width = width + 'px';  
-        cropBox.style.height = height + 'px';  
-        constrainCropBox();  
-        saveState();  
-        updateLivePreview();  
-      }  
-    
-      function applyAspectRatio() {  
-        const ratio = aspectRatioSelect.value;  
-        if(ratio === 'free') return;  
-        const currentWidth = parseInt(cropBox.style.width);  
-        const newHeight = Math.round(currentWidth / parseFloat(ratio));  
-        cropBox.style.height = newHeight + 'px';  
-        cropHeightInput.value = newHeight;  
-        constrainCropBox();  
-        saveState();  
-        updateLivePreview();  
-      }  
-    
-      function constrainCropBox() {  
-        let left = parseInt(cropBox.style.left) || 0;  
-        let top = parseInt(cropBox.style.top) || 0;  
-        const width = parseInt(cropBox.style.width);  
-        const height = parseInt(cropBox.style.height);  
-        if(left < 0) left = 0;  
-        if(left + width > imagePreview.width) left = imagePreview.width - width;  
-        if(top < 0) top = 0;  
-        if(top + height > imagePreview.height) top = imagePreview.height - height;  
-        cropBox.style.left = left + 'px';  
-        cropBox.style.top = top + 'px';  
-      }  
-    
-      function updateDimensionInputs() {  
-        cropWidthInput.value = parseInt(cropBox.style.width);  
-        cropHeightInput.value = parseInt(cropBox.style.height);  
-      }  
-    
-      function startDrag(e) {  
-        e.preventDefault();  
-        if(e.target.classList.contains('resize-handle')) return;  
-        isDragging = true;  
-        startX = e.clientX;  
-        startY = e.clientY;  
-        startLeft = parseInt(cropBox.style.left) || 0;  
-        startTop = parseInt(cropBox.style.top) || 0;  
-      }  
-    
-      function startResize(e) {  
-        e.preventDefault();  
-        e.stopPropagation();  
-        isResizing = true;  
-        currentResizeHandle = e.target;  
-        startX = e.clientX;  
-        startY = e.clientY;  
-        startWidth = parseInt(cropBox.style.width);  
-        startHeight = parseInt(cropBox.style.height);  
-        startLeft = parseInt(cropBox.style.left) || 0;  
-        startTop = parseInt(cropBox.style.top) || 0;  
-      }  
-    
-      function handleMouseMove(e) {  
-        if(isDragging) {  
-          const dx = e.clientX - startX;  
-          const dy = e.clientY - startY;  
-          cropBox.style.left = (startLeft + dx) + 'px';  
-          cropBox.style.top = (startTop + dy) + 'px';  
-          constrainCropBox();  
-          updateDimensionInputs();  
-          updateLivePreview();  
-        } else if(isResizing && currentResizeHandle) {  
-          const ratioLocked = (aspectRatioSelect.value !== 'free');  
-          const ratio = ratioLocked ? parseFloat(aspectRatioSelect.value) : null;  
-          const dx = e.clientX - startX;  
-          const dy = e.clientY - startY;  
-          let newWidth, newHeight, newLeft = startLeft, newTop = startTop;  
-    
-          if(currentResizeHandle.classList.contains('handle-se')) {  
-            if(ratioLocked) {  
-              newWidth = startWidth + dx;  
-              newHeight = newWidth / ratio;  
-            } else {  
-              newWidth = startWidth + dx;  
-              newHeight = startHeight + dy;  
-            }  
-          } else if(currentResizeHandle.classList.contains('handle-sw')) {  
-            if(ratioLocked) {  
-              newWidth = startWidth - dx;  
-              newHeight = newWidth / ratio;  
-              newLeft = startLeft + dx;  
-            } else {  
-              newWidth = startWidth - dx;  
-              newHeight = startHeight + dy;  
-              newLeft = startLeft + dx;  
-            }  
-          } else if(currentResizeHandle.classList.contains('handle-ne')) {  
-            if(ratioLocked) {  
-              newWidth = startWidth + dx;  
-              newHeight = newWidth / ratio;  
-              newTop = startTop + (startHeight - newHeight);  
-            } else {  
-              newWidth = startWidth + dx;  
-              newHeight = startHeight - dy;  
-              newTop = startTop + dy;  
-            }  
-          } else if(currentResizeHandle.classList.contains('handle-nw')) {  
-            if(ratioLocked) {  
-              newWidth = startWidth - dx;  
-              newHeight = newWidth / ratio;  
-              newLeft = startLeft + dx;  
-              newTop = startTop + (startHeight - newHeight);  
-            } else {  
-              newWidth = startWidth - dx;  
-              newHeight = startHeight - dy;  
-              newLeft = startLeft + dx;  
-              newTop = startTop + dy;  
-            }  
-          }  
-          cropBox.style.width = newWidth + 'px';  
-          cropBox.style.height = newHeight + 'px';  
-          cropBox.style.left = newLeft + 'px';  
-          cropBox.style.top = newTop + 'px';  
-          updateDimensionInputs();  
-          constrainCropBox();  
-          updateLivePreview();  
-        }  
-      }  
-    
-      function stopDragAndResize() {  
-        if(isDragging || isResizing) {  
-          isDragging = false;  
-          isResizing = false;  
-          currentResizeHandle = null;  
-          saveState();  
-        }  
-      }  
-    
-      function handleTouchStart(e) {  
-        e.preventDefault();  
-        const touch = e.touches[0];  
-        if(touch) {  
-          startDrag({clientX: touch.clientX, clientY: touch.clientY, target: e.target, preventDefault: () => {}});  
-        }  
-      }  
-    
-      function handleTouchStartResize(e) {  
-        e.preventDefault();  
-        e.stopPropagation();  
-        const touch = e.touches[0];  
-        if(touch) {  
-          startResize({clientX: touch.clientX, clientY: touch.clientY, target: e.target, preventDefault: () => {}, stopPropagation: () => {}});  
-        }  
-      }  
-    
-      function handleTouchMove(e) {  
-        if(isDragging || isResizing) {  
-          e.preventDefault();  
-          const touch = e.touches[0];  
-          if(touch) {  
-            handleMouseMove({clientX: touch.clientX, clientY: touch.clientY});  
-          }  
-        }  
-      }  
-    
-      function updateLivePreview() {  
-        if(!originalImage) return;  
-        const left = parseInt(cropBox.style.left) || 0;  
-        const top = parseInt(cropBox.style.top) || 0;  
-        const width = parseInt(cropBox.style.width);  
-        const height = parseInt(cropBox.style.height);  
-        livePreviewCanvas.width = width;  
-        livePreviewCanvas.height = height;  
-        const scaleX = originalImage.width / imagePreview.width;  
-        const scaleY = originalImage.height / imagePreview.height;  
-        liveCtx.clearRect(0, 0, width, height);  
-        if(cropBox.classList.contains('oval')) {  
-          liveCtx.save();  
-          liveCtx.beginPath();  
-          liveCtx.ellipse(width/2, height/2, width/2, height/2, 0, 0, Math.PI*2);  
-          liveCtx.clip();  
-          liveCtx.drawImage(originalImage, left * scaleX, top * scaleY, width * scaleX, height * scaleY, 0, 0, width, height);  
-          liveCtx.restore();  
-        } else {  
-          liveCtx.drawImage(originalImage, left * scaleX, top * scaleY, width * scaleX, height * scaleY, 0, 0, width, height);  
-        }  
-      }  
-    
-      function cropAndSave() {  
-        if(!originalImage) {  
-          showAlert('দয়া করে প্রথমে একটি ইমেজ আপলোড করুন।', 'error');  
-          return;  
-        }  
-        let filename = filenameInput.value.trim() || 'cropped_image';  
-        filename = filename.replace(/\.(jpeg|jpg|png)$/i, '');  
+      let originalImage = null;
+      // নতুন ভ্যারিয়েবল: অরিজিনাল ইমেজের নাম (এক্সটেনশন ছাড়া)
+      let originalImageName = '';
       
-        const left = parseInt(cropBox.style.left) || 0;  
-        const top = parseInt(cropBox.style.top) || 0;  
-        const width = parseInt(cropBox.style.width);  
-        const height = parseInt(cropBox.style.height);  
-        const canvas = document.createElement('canvas');  
-        canvas.width = width;  
-        canvas.height = height;  
-        const ctx = canvas.getContext('2d');  
-        const scaleX = originalImage.width / imagePreview.width;  
-        const scaleY = originalImage.height / imagePreview.height;  
-        if(cropBox.classList.contains('oval')) {  
-          ctx.save();  
-          ctx.beginPath();  
-          ctx.ellipse(width/2, height/2, width/2, height/2, 0, 0, Math.PI*2);  
-          ctx.clip();  
-          ctx.drawImage(originalImage, left * scaleX, top * scaleY, width * scaleX, height * scaleY, 0, 0, width, height);  
-          ctx.restore();  
-        } else {  
-          ctx.drawImage(originalImage, left * scaleX, top * scaleY, width * scaleX, height * scaleY, 0, 0, width, height);  
-        }  
-        let format = formatSelect.value;  
-        let dataUrl;  
-        if(format === 'jpeg') {  
-          const quality = parseFloat(qualityInput.value) || 0.92;  
-          dataUrl = canvas.toDataURL('image/jpeg', quality);  
-        } else {  
-          dataUrl = canvas.toDataURL('image/png');  
-        }  
-        lastDataUrl = dataUrl;  
-        resultImage.src = dataUrl;  
-        cropContainer.style.display = 'none';  
-        resultContainer.style.display = 'block';  
-        showAlert('ইমেজ সফলভাবে ক্রপ করা হয়েছে!', 'success');  
-      }  
+      let isDragging = false;
+      let isResizing = false;
+      let currentResizeHandle = null;
+      let startX, startY, startWidth, startHeight, startLeft, startTop;
     
-      async function saveFileToPath(dataUrl, filename, format) {  
-        if(window.showSaveFilePicker) {  
-          const opts = {  
-            suggestedName: filename + '.' + (format === 'jpeg' ? 'jpg' : 'png'),  
-            types: [{  
-              description: format.toUpperCase() + ' Image',  
-              accept: { ['image/' + format]: ['.' + (format === 'jpeg' ? 'jpg' : 'png')] }  
-            }]  
-          };  
-          try {  
-            const handle = await window.showSaveFilePicker(opts);  
-            const writable = await handle.createWritable();  
-            const blob = await (await fetch(dataUrl)).blob();  
-            await writable.write(blob);  
-            await writable.close();  
-            showAlert('ইমেজ সফলভাবে নির্দিষ্ট পাথে সেভ করা হয়েছে!', 'success');  
-          } catch (error) {  
-            showAlert('ফাইল সেভ করতে সমস্যা হয়েছে: ' + error.message, 'error');  
-          }  
-        } else {  
-          showAlert('আপনার ব্রাউজার এই ফিচার সমর্থন করে না।', 'error');  
-        }  
-      }  
+      // ইভেন্ট লিসেনার
+      uploadBtn.addEventListener('click', () => fileInput.click());
+      fileInput.addEventListener('change', handleFileSelect);
+      applyDimensionsBtn.addEventListener('click', applyDimensions);
+      cropBtn.addEventListener('click', cropAndSave);
+      resetBtn.addEventListener('click', resetApp);
+      aspectRatioSelect.addEventListener('change', applyAspectRatio);
+      formatSelect.addEventListener('change', function() {
+        qualityGroup.style.display = (this.value === 'jpeg') ? 'block' : 'none';
+      });
+      savePathBtn.addEventListener('click', () => {
+        if(!lastDataUrl) {
+          showAlert('ক্রপ করা ইমেজ পাওয়া যায়নি!', 'error');
+          return;
+        }
+        let filename = filenameInput.value.trim();
+        // যদি ইউজার নাম না দেয় তাহলে অরিজিনাল ইমেজের নাম ব্যবহার করুন
+        if(!filename) {
+          filename = originalImageName;
+        }
+        filename = filename.replace(/\.(jpeg|jpg|png)$/i, '');
+        saveFileToPath(lastDataUrl, filename, formatSelect.value);
+      });
     
-      function resetApp() {  
-        uploadSection.style.display = 'block';  
-        cropContainer.style.display = 'none';  
-        resultContainer.style.display = 'none';  
-        fileInput.value = '';  
-        alertBox.style.display = 'none';  
-        originalImage = null;  
-        imagePreview.src = '';  
-        resultImage.src = '';  
-        filenameInput.value = '';  
-        historyStack = [];  
-        redoStack = [];  
-      }  
+      // Undo/Redo buttons
+      document.getElementById('undo-btn').addEventListener('click', undo);
+      document.getElementById('redo-btn').addEventListener('click', redo);
     
-      function showAlert(message, type) {  
-        alertBox.textContent = message;  
-        alertBox.className = 'alert';  
-        alertBox.classList.add('alert-' + type);  
-        alertBox.style.display = 'block';  
-        setTimeout(() => { alertBox.style.display = 'none'; }, 5000);  
-      }  
-    });  
-  </script>  
-</body>  
+      // 'ফিরে যান' বাটনের ইভেন্ট লিসেনার
+      backBtn.addEventListener('click', function() {
+        resultContainer.style.display = 'none';
+        cropContainer.style.display = 'flex';
+      });
+    
+      // ক্রপ বক্স শেপ সিলেকশন
+      document.querySelectorAll('input[name="crop-shape"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+          if (this.value === 'oval') {
+            cropBox.classList.add('oval');
+          } else {
+            cropBox.classList.remove('oval');
+          }
+        });
+      });
+    
+      // ড্র্যাগ ও রিসাইজ ইভেন্ট
+      cropBox.addEventListener('mousedown', startDrag);
+      document.querySelectorAll('.resize-handle').forEach(handle => {
+        handle.addEventListener('mousedown', startResize);
+      });
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', stopDragAndResize);
+    
+      // টাচ ইভেন্ট
+      cropBox.addEventListener('touchstart', handleTouchStart);
+      document.querySelectorAll('.resize-handle').forEach(handle => {
+        handle.addEventListener('touchstart', handleTouchStartResize);
+      });
+      document.addEventListener('touchmove', handleTouchMove);
+      document.addEventListener('touchend', stopDragAndResize);
+    
+      // বর্তমান স্টেট সংরক্ষণ
+      function saveState() {
+        historyStack.push({
+          left: cropBox.style.left,
+          top: cropBox.style.top,
+          width: cropBox.style.width,
+          height: cropBox.style.height,
+          shape: cropBox.classList.contains('oval') ? 'oval' : 'rectangle'
+        });
+        redoStack = [];
+      }
+    
+      function undo() {
+        if(historyStack.length > 1) {
+          redoStack.push(historyStack.pop());
+          let state = historyStack[historyStack.length - 1];
+          applyState(state);
+        } else {
+          showAlert('আর কোন পরিবর্তন পাওয়া যায়নি!', 'error');
+        }
+      }
+    
+      function redo() {
+        if(redoStack.length) {
+          let state = redoStack.pop();
+          historyStack.push(state);
+          applyState(state);
+        } else {
+          showAlert('আর কোন পরিবর্তন পুনরায় করা যায়নি!', 'error');
+        }
+      }
+    
+      function applyState(state) {
+        cropBox.style.left = state.left;
+        cropBox.style.top = state.top;
+        cropBox.style.width = state.width;
+        cropBox.style.height = state.height;
+        if(state.shape === 'oval') {
+          cropBox.classList.add('oval');
+          document.querySelector('input[name="crop-shape"][value="oval"]').checked = true;
+        } else {
+          cropBox.classList.remove('oval');
+          document.querySelector('input[name="crop-shape"][value="rectangle"]').checked = true;
+        }
+        updateDimensionInputs();
+        updateLivePreview();
+      }
+    
+      function handleFileSelect(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
+        if (!validTypes.includes(file.type)) {
+          showAlert('দুঃখিত, শুধুমাত্র JPG, PNG, এবং GIF ফরম্যাট সমর্থিত।', 'error');
+          return;
+        }
+        // অরিজিনাল ইমেজের নাম (এক্সটেনশন ছাড়া) সংরক্ষণ
+        originalImageName = file.name.split('.')[0];
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          const img = new Image();
+          img.onload = function() {
+            originalImage = img;
+            imagePreview.src = event.target.result;
+            // ডিফল্টভাবে ইনপুট ফিল্ডে অরিজিনাল ফাইলের নাম (এক্সটেনশন ছাড়া) বসবে
+            filenameInput.value = originalImageName;
+            initCropBox();
+            uploadSection.style.display = 'none';
+            cropContainer.style.display = 'flex';
+          };
+          img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    
+      function initCropBox() {
+        const width = Math.min(200, imagePreview.width);
+        const height = Math.min(200, imagePreview.height);
+        cropWidthInput.value = width;
+        cropHeightInput.value = height;
+        const left = (imagePreview.width / 2) - (width / 2);
+        const top = (imagePreview.height / 2) - (height / 2);
+        cropBox.style.width = width + 'px';
+        cropBox.style.height = height + 'px';
+        cropBox.style.left = left + 'px';
+        cropBox.style.top = top + 'px';
+        saveState();
+        updateLivePreview();
+      }
+    
+      function applyDimensions() {
+        const width = parseInt(cropWidthInput.value);
+        const height = parseInt(cropHeightInput.value);
+        if(isNaN(width) || isNaN(height) || width <= 0 || height <= 0) {
+          showAlert('দয়া করে বৈধ আকার প্রবেশ করান।', 'error');
+          return;
+        }
+        cropBox.style.width = width + 'px';
+        cropBox.style.height = height + 'px';
+        constrainCropBox();
+        saveState();
+        updateLivePreview();
+      }
+    
+      function applyAspectRatio() {
+        const ratio = aspectRatioSelect.value;
+        if(ratio === 'free') return;
+        const currentWidth = parseInt(cropBox.style.width);
+        const newHeight = Math.round(currentWidth / parseFloat(ratio));
+        cropBox.style.height = newHeight + 'px';
+        cropHeightInput.value = newHeight;
+        constrainCropBox();
+        saveState();
+        updateLivePreview();
+      }
+    
+      function constrainCropBox() {
+        let left = parseInt(cropBox.style.left) || 0;
+        let top = parseInt(cropBox.style.top) || 0;
+        const width = parseInt(cropBox.style.width);
+        const height = parseInt(cropBox.style.height);
+        if(left < 0) left = 0;
+        if(left + width > imagePreview.width) left = imagePreview.width - width;
+        if(top < 0) top = 0;
+        if(top + height > imagePreview.height) top = imagePreview.height - height;
+        cropBox.style.left = left + 'px';
+        cropBox.style.top = top + 'px';
+      }
+    
+      function updateDimensionInputs() {
+        cropWidthInput.value = parseInt(cropBox.style.width);
+        cropHeightInput.value = parseInt(cropBox.style.height);
+      }
+    
+      function startDrag(e) {
+        e.preventDefault();
+        if(e.target.classList.contains('resize-handle')) return;
+        isDragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        startLeft = parseInt(cropBox.style.left) || 0;
+        startTop = parseInt(cropBox.style.top) || 0;
+      }
+    
+      function startResize(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        isResizing = true;
+        currentResizeHandle = e.target;
+        startX = e.clientX;
+        startY = e.clientY;
+        startWidth = parseInt(cropBox.style.width);
+        startHeight = parseInt(cropBox.style.height);
+        startLeft = parseInt(cropBox.style.left) || 0;
+        startTop = parseInt(cropBox.style.top) || 0;
+      }
+    
+      function handleMouseMove(e) {
+        if(isDragging) {
+          const dx = e.clientX - startX;
+          const dy = e.clientY - startY;
+          cropBox.style.left = (startLeft + dx) + 'px';
+          cropBox.style.top = (startTop + dy) + 'px';
+          constrainCropBox();
+          updateDimensionInputs();
+          updateLivePreview();
+        } else if(isResizing && currentResizeHandle) {
+          const ratioLocked = (aspectRatioSelect.value !== 'free');
+          const ratio = ratioLocked ? parseFloat(aspectRatioSelect.value) : null;
+          const dx = e.clientX - startX;
+          const dy = e.clientY - startY;
+          let newWidth, newHeight, newLeft = startLeft, newTop = startTop;
+    
+          if(currentResizeHandle.classList.contains('handle-se')) {
+            if(ratioLocked) {
+              newWidth = startWidth + dx;
+              newHeight = newWidth / ratio;
+            } else {
+              newWidth = startWidth + dx;
+              newHeight = startHeight + dy;
+            }
+          } else if(currentResizeHandle.classList.contains('handle-sw')) {
+            if(ratioLocked) {
+              newWidth = startWidth - dx;
+              newHeight = newWidth / ratio;
+              newLeft = startLeft + dx;
+            } else {
+              newWidth = startWidth - dx;
+              newHeight = startHeight + dy;
+              newLeft = startLeft + dx;
+            }
+          } else if(currentResizeHandle.classList.contains('handle-ne')) {
+            if(ratioLocked) {
+              newWidth = startWidth + dx;
+              newHeight = newWidth / ratio;
+              newTop = startTop + (startHeight - newHeight);
+            } else {
+              newWidth = startWidth + dx;
+              newHeight = startHeight - dy;
+              newTop = startTop + dy;
+            }
+          } else if(currentResizeHandle.classList.contains('handle-nw')) {
+            if(ratioLocked) {
+              newWidth = startWidth - dx;
+              newHeight = newWidth / ratio;
+              newLeft = startLeft + dx;
+              newTop = startTop + (startHeight - newHeight);
+            } else {
+              newWidth = startWidth - dx;
+              newHeight = startHeight - dy;
+              newLeft = startLeft + dx;
+              newTop = startTop + dy;
+            }
+          }
+          cropBox.style.width = newWidth + 'px';
+          cropBox.style.height = newHeight + 'px';
+          cropBox.style.left = newLeft + 'px';
+          cropBox.style.top = newTop + 'px';
+          updateDimensionInputs();
+          constrainCropBox();
+          updateLivePreview();
+        }
+      }
+    
+      function stopDragAndResize() {
+        if(isDragging || isResizing) {
+          isDragging = false;
+          isResizing = false;
+          currentResizeHandle = null;
+          saveState();
+        }
+      }
+    
+      function handleTouchStart(e) {
+        e.preventDefault();
+        const touch = e.touches[0];
+        if(touch) {
+          startDrag({clientX: touch.clientX, clientY: touch.clientY, target: e.target, preventDefault: () => {}});
+        }
+      }
+    
+      function handleTouchStartResize(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const touch = e.touches[0];
+        if(touch) {
+          startResize({clientX: touch.clientX, clientY: touch.clientY, target: e.target, preventDefault: () => {}, stopPropagation: () => {}});
+        }
+      }
+    
+      function handleTouchMove(e) {
+        if(isDragging || isResizing) {
+          e.preventDefault();
+          const touch = e.touches[0];
+          if(touch) {
+            handleMouseMove({clientX: touch.clientX, clientY: touch.clientY});
+          }
+        }
+      }
+    
+      function updateLivePreview() {
+        if(!originalImage) return;
+        const left = parseInt(cropBox.style.left) || 0;
+        const top = parseInt(cropBox.style.top) || 0;
+        const width = parseInt(cropBox.style.width);
+        const height = parseInt(cropBox.style.height);
+        livePreviewCanvas.width = width;
+        livePreviewCanvas.height = height;
+        const scaleX = originalImage.width / imagePreview.width;
+        const scaleY = originalImage.height / imagePreview.height;
+        liveCtx.clearRect(0, 0, width, height);
+        if(cropBox.classList.contains('oval')) {
+          liveCtx.save();
+          liveCtx.beginPath();
+          liveCtx.ellipse(width/2, height/2, width/2, height/2, 0, 0, Math.PI*2);
+          liveCtx.clip();
+          liveCtx.drawImage(originalImage, left * scaleX, top * scaleY, width * scaleX, height * scaleY, 0, 0, width, height);
+          liveCtx.restore();
+        } else {
+          liveCtx.drawImage(originalImage, left * scaleX, top * scaleY, width * scaleX, height * scaleY, 0, 0, width, height);
+        }
+      }
+    
+      function cropAndSave() {
+        if(!originalImage) {
+          showAlert('দয়া করে প্রথমে একটি ইমেজ আপলোড করুন।', 'error');
+          return;
+        }
+        // ব্যবহারকারী যদি ইনপুট ফিল্ড ফাঁকা রেখে দেন তাহলে অরিজিনাল ইমেজের নাম (এক্সটেনশন ছাড়া) ব্যবহার করুন
+        let filename = filenameInput.value.trim();
+        if(!filename) {
+          filename = originalImageName;
+        }
+        filename = filename.replace(/\.(jpeg|jpg|png)$/i, '');
+      
+        const left = parseInt(cropBox.style.left) || 0;
+        const top = parseInt(cropBox.style.top) || 0;
+        const width = parseInt(cropBox.style.width);
+        const height = parseInt(cropBox.style.height);
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        const scaleX = originalImage.width / imagePreview.width;
+        const scaleY = originalImage.height / imagePreview.height;
+        if(cropBox.classList.contains('oval')) {
+          ctx.save();
+          ctx.beginPath();
+          ctx.ellipse(width/2, height/2, width/2, height/2, 0, 0, Math.PI*2);
+          ctx.clip();
+          ctx.drawImage(originalImage, left * scaleX, top * scaleY, width * scaleX, height * scaleY, 0, 0, width, height);
+          ctx.restore();
+        } else {
+          ctx.drawImage(originalImage, left * scaleX, top * scaleY, width * scaleX, height * scaleY, 0, 0, width, height);
+        }
+        let format = formatSelect.value;
+        let dataUrl;
+        if(format === 'jpeg') {
+          const quality = parseFloat(qualityInput.value) || 0.92;
+          dataUrl = canvas.toDataURL('image/jpeg', quality);
+        } else {
+          dataUrl = canvas.toDataURL('image/png');
+        }
+        lastDataUrl = dataUrl;
+        resultImage.src = dataUrl;
+        cropContainer.style.display = 'none';
+        resultContainer.style.display = 'block';
+        showAlert('ইমেজ সফলভাবে ক্রপ করা হয়েছে!', 'success');
+      }
+    
+      async function saveFileToPath(dataUrl, filename, format) {
+        if(window.showSaveFilePicker) {
+          const opts = {
+            suggestedName: filename + '.' + (format === 'jpeg' ? 'jpg' : 'png'),
+            types: [{
+              description: format.toUpperCase() + ' Image',
+              accept: { ['image/' + format]: ['.' + (format === 'jpeg' ? 'jpg' : 'png')] }
+            }]
+          };
+          try {
+            const handle = await window.showSaveFilePicker(opts);
+            const writable = await handle.createWritable();
+            const blob = await (await fetch(dataUrl)).blob();
+            await writable.write(blob);
+            await writable.close();
+            showAlert('ইমেজ সফলভাবে নির্দিষ্ট পাথে সেভ করা হয়েছে!', 'success');
+          } catch (error) {
+            showAlert('ফাইল সেভ করতে সমস্যা হয়েছে: ' + error.message, 'error');
+          }
+        } else {
+          showAlert('আপনার ব্রাউজার এই ফিচার সমর্থন করে না।', 'error');
+        }
+      }
+    
+      function resetApp() {
+        uploadSection.style.display = 'block';
+        cropContainer.style.display = 'none';
+        resultContainer.style.display = 'none';
+        fileInput.value = '';
+        alertBox.style.display = 'none';
+        originalImage = null;
+        imagePreview.src = '';
+        resultImage.src = '';
+        filenameInput.value = '';
+        historyStack = [];
+        redoStack = [];
+      }
+    
+      function showAlert(message, type) {
+        alertBox.textContent = message;
+        alertBox.className = 'alert';
+        alertBox.classList.add('alert-' + type);
+        alertBox.style.display = 'block';
+        setTimeout(() => { alertBox.style.display = 'none'; }, 5000);
+      }
+    });
+  </script>
+</body>
 </html>
