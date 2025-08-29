@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ক্যামেরা + জেমিনি অ্যাপ</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            padding: 20px;
+            background-color: #f0f0f0;
+            color: #333;
+        }
+        h1 {
+            color: #1a73e8;
+        }
+        .controls, .io-areas {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .io-areas {
+            flex-direction: column;
+            align-items: stretch;
+            width: 90%;
+            max-width: 500px;
+        }
+        textarea {
+            width: 100%;
+            box-sizing: border-box; /* Ensures padding doesn't affect width */
+            height: 80px;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+            resize: vertical;
+        }
+        #instructionText {
+            height: 3em;
+        }
+        #responseText {
+             height: 6em;
+        }
+        #videoFeed {
+            width: 100%;
+            max-width: 480px;
+            height: auto;
+            border: 2px solid #333;
+            background-color: #000;
+            border-radius: 8px;
+        }
+        #startButton {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 4px;
+            color: white;
+            transition: background-color 0.3s;
+        }
+        #startButton.start {
+            background-color: #28a745; /* Green */
+        }
+        #startButton.start:hover {
+            background-color: #218838;
+        }
+        #startButton.stop {
+            background-color: #dc3545; /* Red */
+        }
+         #startButton.stop:hover {
+            background-color: #c82333;
+        }
+        label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            display: block;
+        }
+        select {
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>ক্যামেরা + জেমিনি ইন্টারেকশন অ্যাপ</h1>
+
+    <video id="videoFeed" autoplay playsinline></video>
+    <canvas id="canvas" class="hidden"></canvas>
+
+    <div class="io-areas">
+        <div>
+            <label for="instructionText">নির্দেশনা (Instruction):</label>
+            <textarea id="instructionText"></textarea>
+        </div>
+        <div>
+            <label for="responseText">উত্তর (Response):</label>
+            <textarea id="responseText" readonly placeholder="এখানে সার্ভারের উত্তর দেখা যাবে..."></textarea>
+        </div>
+    </div>
+
+    <div class="controls">
+        <label for="intervalSelect">দুটি অনুরোধের মধ্যে ব্যবধান:</label>
+        <select id="intervalSelect">
+            <option value="100">100ms</option>
+            <option value="250">250ms</option>
+            <option value="500">500ms</option>
+            <option value="1000" selected>1s</option>
+            <option value="2000">2s</option>
+        </select>
+        <button id="startButton" class="start">Start</button>
+    </div>
+
+    <script type="module">
+        // Google GenAI SDK ইম্পোর্ট করা হচ্ছে
+        import { GoogleGenerativeAI } from 'https://cdn.jsdelivr.net/npm/@google/generative-ai@0.11.3/dist/index.min.js';
+
+        // HTML এলিমেন্টগুলো সিলেক্ট করা হচ্ছে
+        const video = document.getElementById('videoFeed');
+        const canvas = document.getElementById('canvas');
+        const instructionText = document.getElementById('instructionText');
+        const responseText = document.getElementById('responseText');
+        const intervalSelect = document.getElementById('intervalSelect');
+        const startButton = document.getElementById('startButton');
+
+        // ডিফল্ট নির্দেশনা সেট করা হচ্ছে
+        instructionText.value = "এই ছবিতে যা দেখছো তার একটি সংক্ষিপ্ত বর্ণনা দাও।";
+
+        let stream;
+        let intervalId;
+        let isProcessing = false;
+        let isSending = false; // একাধিক অনুরোধ একসাথে পাঠানো रोकने জন্য ফ্ল্যাগ
+
+        // --- সংশোধিত এবং গুরুত্বপূর্ণ অংশ শুরু ---
+
+        // !!! সতর্কতা: আপনার API কী এখানে পেস্ট করুন।
+        // প্রোডাকশন অ্যাপের জন্য, এই কী ক্লায়েন্ট-সাইড কোডে রাখবেন না। একটি ব্যাকএন্ড ব্যবহার করুন।
+        const API_KEY = 'AIzaSyBsWNW2588xAni94QgkEM8Fo2WLLfkhAME';
+
+        if (API_KEY === 'AIzaSyBsWNW2588xAni94QgkEM8Fo2WLLfkhAME') {
+            alert("অনুগ্রহ করে স্ক্রিপ্টের মধ্যে আপনার নিজের Google Gemini API কী সেট করুন।");
+            startButton.disabled = true;
+        }
+
+        // Gemini API শুরু করা হচ্ছে
+        const genAI = new GoogleGenerativeAI(API_KEY);
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
+
+        // ডেটা URL-কে Gemini-এর জন্য প্রয়োজনীয় ফরম্যাটে রূপান্তর করার জন্য হেল্পার ফাংশন
+        function dataUrlToGenerativePart(dataUrl) {
+            const match = dataUrl.match(/^data:(.+);base64,(.+)$/);
+            if (!match) {
+                throw new Error("Invalid data URL format");
+            }
+            return {
+                inlineData: {
+                    data: match[2],      // base64 ডেটা
+                    mimeType: match[1],  // যেমন 'image/jpeg'
+                },
+            };
+        }
+
+        // Gemini API-তে ডেটা পাঠানোর জন্য সংশোধিত ফাংশন
+        async function sendToGemini(instruction, imageBase64URL) {
+            try {
+                const imagePart = dataUrlToGenerativePart(imageBase64URL);
+                const promptParts = [
+                    instruction,
+                    imagePart,
+                ];
+
+                const result = await model.generateContent(promptParts);
+                const response = result.response;
+                return response.text();
+            } catch (err) {
+                console.error("Gemini API error:", err);
+                return `Gemini API Error: ${err.message}`;
+            }
+        }
+        // --- সংশোধিত অংশ শেষ ---
+
+
+        async function initCamera() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
+                video.srcObject = stream;
+                responseText.value = "ক্যামেরা অ্যাক্সেস করা হয়েছে। অ্যাপটি এখন প্রস্তুত।";
+            } catch (err) {
+                console.error("ক্যামেরা অ্যাক্সেসে সমস্যা:", err);
+                responseText.value = `Error: ${err.name} - ${err.message}`;
+                alert(`ক্যামেরা অ্যাক্সেসে সমস্যা: ${err.name}। অনুগ্রহ করে পারমিশন দিয়েছেন কিনা নিশ্চিত করুন।`);
+            }
+        }
+
+        function captureImage() {
+            if (!stream || !video.videoWidth) return null;
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            // JPEG ফরম্যাটে কম কোয়ালিটিতে ছবি নেওয়া হচ্ছে যাতে ডেটা সাইজ কম থাকে
+            return canvas.toDataURL('image/jpeg', 0.5);
+        }
+
+
+        async function sendData() {
+            // যদি প্রসেসিং বন্ধ থাকে বা আগের অনুরোধ চলমান থাকে, তাহলে নতুন করে পাঠাবে না
+            if (!isProcessing || isSending) return;
+
+            isSending = true; // ফ্ল্যাগ সেট করা হলো যে একটি অনুরোধ পাঠানো হচ্ছে
+            const instruction = instructionText.value;
+            const imageBase64URL = captureImage();
+
+            if (!imageBase64URL) {
+                responseText.value = "ছবি ক্যাপচার করা সম্ভব হলো না।";
+                isSending = false;
+                return;
+            }
+
+            if (responseText.value.slice(0, 11) !== "প্রসেসিং...") {
+                 responseText.value = "প্রসেসিং...";
+            }
+
+            const response = await sendToGemini(instruction, imageBase64URL);
+            // শুধুমাত্র যদি প্রসেসিং এখনও চালু থাকে, তাহলেই উত্তর দেখাও
+            if(isProcessing) {
+                responseText.value = response;
+            }
+            isSending = false; // অনুরোধ শেষ, ফ্ল্যাগ রিসেট করা হলো
+        }
+
+        function handleStart() {
+            if (!stream) {
+                alert("ক্যামেরা পাওয়া যায়নি। প্রথমে পারমিশন দিন।");
+                return;
+            }
+            isProcessing = true;
+            startButton.textContent = "Stop";
+            startButton.classList.replace('start', 'stop');
+            instructionText.disabled = true;
+            intervalSelect.disabled = true;
+
+            sendData(); // প্রথমে একবার কল করা হচ্ছে
+            const intervalTime = parseInt(intervalSelect.value, 10);
+            intervalId = setInterval(sendData, intervalTime);
+        }
+
+        function handleStop() {
+            isProcessing = false;
+            if (intervalId) clearInterval(intervalId);
+            startButton.textContent = "Start";
+            startButton.classList.replace('stop', 'start');
+            instructionText.disabled = false;
+            intervalSelect.disabled = false;
+            if (responseText.value.includes("প্রসেসিং...")) {
+                responseText.value = "প্রসেসিং থামানো হয়েছে।";
+            }
+        }
+
+        startButton.addEventListener('click', () => {
+            isProcessing ? handleStop() : handleStart();
+        });
+
+        // পেজ লোড হলে ক্যামেরা চালু হবে
+        window.addEventListener('DOMContentLoaded', initCamera);
+
+        // পেজ বন্ধ করার আগে স্ট্রিম ও ইন্টারভাল বন্ধ করা
+        window.addEventListener('beforeunload', () => {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+            if (intervalId) {
+                clearInterval(intervalId);
+            }
+        });
+    </script>
+
+</body>
+</html>
